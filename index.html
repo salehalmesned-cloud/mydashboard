@@ -49,6 +49,20 @@
   </style>
 </head>
 <body>
+<script>
+  // كلمة المرور اللي تبيها
+  const PASSWORD = "1234";
+
+  // طلب كلمة المرور
+  const pass = prompt("أدخل كلمة المرور:");
+
+  // التحقق
+  if (pass !== PASSWORD) {
+    alert("كلمة المرور غير صحيحة");
+    document.body.innerHTML = "<h2 style='color:red;text-align:center;margin-top:50px;'>🚫 وصول مرفوض</h2>";
+    throw new Error("إيقاف التشغيل: كلمة المرور خاطئة");
+  }
+</script>
   <header>
     <div class="container row" style="justify-content:space-between">
       <div>
