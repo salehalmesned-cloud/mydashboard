@@ -1,0 +1,513 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>لوحة تحكم مصروفات مقهى Mix Ice (دون إنترنت/مكتبات)</title>
+  <style>
+    :root{--bg:#f7f7fb;--fg:#0f172a;--muted:#6b7280;--card:#fff;--border:#e5e7eb;--accent:#111827;--green:#16a34a;--amber:#d97706;}
+    *{box-sizing:border-box}
+    body{margin:0;background:var(--bg);color:var(--fg);font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,"Noto Sans",sans-serif}
+    header{position:sticky;top:0;background:var(--card);border-bottom:1px solid var(--border);z-index:10}
+    .container{max-width:1280px;margin:auto;padding:16px}
+    h1{margin:0;font-size:24px}
+    .muted{color:var(--muted);font-size:12px}
+    .grid{display:grid;gap:16px}
+    .g-3{grid-template-columns:1fr}
+    @media(min-width:1024px){.g-3{grid-template-columns:1fr 2fr}}
+    .card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:16px}
+    .row{display:flex;gap:8px;align-items:center}
+    .row.wrap{flex-wrap:wrap}
+    .btn{border:1px solid var(--border);background:#fff;border-radius:12px;padding:8px 12px;cursor:pointer}
+    .btn-primary{background:var(--accent);border-color:var(--accent);color:#fff}
+    .input, select{border:1px solid var(--border);border-radius:12px;padding:8px;width:100%}
+    .chips{display:flex;gap:8px;flex-wrap:wrap}
+    .chip{background:#f3f4f6;border-radius:999px;padding:4px 8px;font-size:12px}
+    table{width:100%;border-collapse:collapse;font-size:14px}
+    th,td{padding:10px;border-top:1px solid var(--border);text-align:right;background:#fff}
+    thead th{background:#f9fafb;position:sticky;top:0;z-index:1}
+    .stat{font-weight:700;font-size:18px}
+    .ok{background:#dcfce7;color:#166534;border-radius:999px;padding:4px 8px;font-size:12px}
+    .warn{background:#fef3c7;color:#92400e;border-radius:999px;padding:4px 8px;font-size:12px}
+    canvas{width:100%;height:260px;display:block}
+    .footer{color:#9ca3af;font-size:12px;text-align:center;padding:20px}
+    .toolbar .btn{display:inline-flex;align-items:center;gap:6px}
+
+    /* تخطيط العمود الأيمن المعاد ترتيبُه */
+    .right-grid{display:grid;gap:12px}
+    @media(min-width:1024px){.right-grid{grid-template-columns:1fr}}
+    /* شبكة الرسومات 2×2 فوق الجدول */
+    .charts{display:grid;gap:12px}
+    @media(min-width:1024px){.charts{grid-template-columns:1fr 1fr}}
+    .table-wrap{max-height:420px;overflow:auto;border:1px solid var(--border);border-radius:16px;background:var(--card)}
+
+    /* تكبير مدخلات المبيعات */
+    #sales-grid{grid-template-columns:1fr 1fr !important}
+    #sales-grid .input{min-height:44px;font-size:15px}
+    .kpis{display:grid;gap:12px}
+    @media(min-width:1024px){.kpis{grid-template-columns:repeat(5,1fr)}}
+  </style>
+</head>
+<body>
+  <header>
+    <div class="container row" style="justify-content:space-between">
+      <div>
+        <h1>لوحة تحكم مصروفات مقهى Mix Ice</h1>
+        <div class="muted">تعمل محليًا بالكامل — بدون مكتبات خارجية أو إنترنت</div>
+      </div>
+      <div class="row toolbar">
+        <button id="btn-export-csv" class="btn">⬇️ تصدير Excel (CSV)</button>
+        <button id="btn-export-pdf" class="btn">🖨️ تصدير PDF</button>
+        <label class="btn" style="cursor:pointer">⬆️ استيراد (CSV)
+          <input id="file-import" type="file" accept=".csv" style="display:none"/>
+        </label>
+        <button id="btn-reset" class="btn">♻️ تهيئة</button>
+      </div>
+    </div>
+  </header>
+
+  <main class="container grid g-3" style="margin-top:16px">
+    <!-- العمود الأيسر -->
+    <section class="card">
+      <h3 style="margin-top:0;margin-bottom:12px;color:var(--muted)">إضافة مصروف</h3>
+      <div class="grid" style="grid-template-columns:1fr 1fr;gap:12px">
+        <div style="grid-column:1/3">
+          <label class="muted">رقم الصرف</label>
+          <input id="exp-id" class="input" placeholder="مثال: 2025-EXP-001"/>
+        </div>
+        <div>
+          <label class="muted">التاريخ</label>
+          <input id="exp-date" type="date" class="input"/>
+        </div>
+        <div>
+          <label class="muted">الشركة</label>
+          <input id="exp-company" class="input" list="companies-list" placeholder="اختر/أدخل شركة"/>
+          <datalist id="companies-list"></datalist>
+        </div>
+        <div>
+          <label class="muted">المبلغ (ر.س)</label>
+          <input id="exp-amount" type="number" step="0.01" class="input" placeholder="0.00"/>
+        </div>
+        <div>
+          <label class="muted">الحالة</label>
+          <select id="exp-status" class="input">
+            <option>تم السداد</option>
+            <option selected>لم يتم السداد</option>
+          </select>
+        </div>
+        <div style="grid-column:1/3;text-align:end">
+          <button id="btn-add" class="btn btn-primary">إضافة</button>
+        </div>
+      </div>
+
+      <hr style="margin:16px 0;border:none;border-top:1px solid var(--border)">
+
+      <h3 style="margin:0 0 8px;color:var(--muted)">تسجيل الشركات</h3>
+      <div class="row">
+        <input id="new-company" class="input" placeholder="اسم الشركة"/>
+        <button id="btn-add-company" class="btn">إضافة</button>
+      </div>
+      <div id="companies-chips" class="chips" style="margin-top:8px"></div>
+
+      <hr style="margin:16px 0;border:none;border-top:1px solid var(--border)">
+
+      <h3 style="margin:0 0 8px;color:var(--muted)">إدخال المبيعات الشهرية</h3>
+      <div id="sales-grid" class="grid" style="grid-template-columns:1fr 1fr;gap:8px;max-height:320px;overflow:auto"></div>
+    </section>
+
+    <!-- العمود الأيمن -->
+    <section class="right-grid">
+      <!-- فلاتر أعلى القسم -->
+      <div class="row wrap" style="gap:8px 12px;margin-bottom:8px">
+        <input id="q" class="input" placeholder="بحث بالرقم/الشركة/الشهر" style="flex:1 1 260px"/>
+        <select id="f-month" class="input" style="width:auto"><option>الكل</option></select>
+        <select id="f-company" class="input" style="width:auto"><option>الكل</option></select>
+        <select id="f-status" class="input" style="width:auto">
+          <option>الكل</option>
+          <option>تم السداد</option>
+          <option>لم يتم السداد</option>
+        </select>
+      </div>
+
+      <!-- KPIs -->
+      <div id="stats-grid" class="kpis">
+        <div class="card"><div class="muted">إجمالي المصروفات</div><div id="s-all" class="stat">0</div></div>
+        <div class="card"><div class="muted">المدفوع</div><div id="s-paid" class="stat">0</div></div>
+        <div class="card"><div class="muted">غير المدفوع</div><div id="s-unpaid" class="stat">0</div></div>
+        <div class="card"><div class="muted">إجمالي المبيعات</div><div id="s-sales" class="stat">0</div></div>
+        <div class="card"><div class="muted">نسبة المصروفات إلى المبيعات (سنة)</div><div id="s-ratio" class="stat">0%</div></div>
+      </div>
+
+      <!-- الرسومات (فوق الجدول) -->
+      <div class="charts">
+        <div class="card">
+          <div class="muted">إجمالي المصروفات لكل شهر</div>
+          <canvas id="chart-months" width="560" height="260"></canvas>
+        </div>
+        <div class="card">
+          <div class="muted">المصروفات مقابل المبيعات لكل شهر</div>
+          <canvas id="chart-mix" width="560" height="260"></canvas>
+        </div>
+        <div class="card">
+          <div class="muted">مدفوع vs غير مدفوع</div>
+          <canvas id="chart-donut" width="560" height="260"></canvas>
+        </div>
+        <div class="card">
+          <div class="muted">أعلى الشركات إنفاقًا</div>
+          <canvas id="chart-top" width="560" height="260"></canvas>
+        </div>
+      </div>
+
+      <!-- الجدول أسفل الرسومات -->
+      <div class="table-wrap">
+        <table id="tbl"><thead><tr>
+          <th>#</th><th>رقم الصرف</th><th>التاريخ</th><th>اليوم</th><th>الشهر</th><th>الشركة</th><th>المبلغ</th><th>الحالة</th><th>إجراءات</th>
+        </tr></thead><tbody></tbody></table>
+      </div>
+    </section>
+  </main>
+
+  <div id="boot-status" class="container" style="margin-top:8px"></div>
+  <div class="footer">بياناتك تُحفظ محليًا على جهازك (LocalStorage). يمكنك التصدير كنسخة احتياطية واستيرادها لاحقًا.</div>
+
+  <script>
+  (function(){
+    const AR_MONTHS = ['يناير','فبراير','مارس','أبريل','مايو','يونيو','يوليو','أغسطس','سبتمبر','أكتوبر','نوفمبر','ديسمبر'];
+    const LS = { expenses:'mixice_expenses_v1', companies:'mixice_companies_v1', sales:'mixice_sales_v1' };
+    const currency = n => new Intl.NumberFormat('ar-SA',{style:'currency',currency:'SAR',maximumFractionDigits:2}).format(Number(n||0));
+    const todayISO = ()=> new Date().toISOString().slice(0,10);
+
+    let companies = JSON.parse(localStorage.getItem(LS.companies) || '["Mix Ice","المورد العام"]');
+    let expenses  = JSON.parse(localStorage.getItem(LS.expenses)  || '[]');
+    let sales     = JSON.parse(localStorage.getItem(LS.sales)     || 'null');
+    if(!sales){ sales = AR_MONTHS.map((m,i)=>({year:new Date().getFullYear(),monthIndex:i,month:m,amount:0})); }
+
+    const el = id=> document.getElementById(id);
+    const expId=el('exp-id'), expDate=el('exp-date'), expCompany=el('exp-company'), expAmount=el('exp-amount'), expStatus=el('exp-status');
+    const q=el('q'), fMonth=el('f-month'), fCompany=el('f-company'), fStatus=el('f-status');
+    const sAll=el('s-all'), sPaid=el('s-paid'), sUnpaid=el('s-unpaid'), sRatio=el('s-ratio'), sSales=el('s-sales');
+    const tbl=el('tbl').querySelector('tbody');
+    const companiesList=el('companies-list'), chips=el('companies-chips');
+    const salesGrid=el('sales-grid');
+
+    expDate.value = todayISO();
+
+    // مزامنة الشركات مع المصروفات
+    function syncCompaniesWithExpenses(){
+      const set = new Set((companies || []).map(c => (c||'').trim()));
+      (expenses || []).forEach(e => { if(e && e.company) set.add(String(e.company).trim()); });
+      companies = Array.from(set).filter(Boolean).sort((a,b)=> a.localeCompare(b,'ar'));
+    }
+
+    function refreshCompaniesUI(){
+      companiesList.innerHTML=''; chips.innerHTML=''; fCompany.innerHTML='<option>الكل</option>';
+      companies.forEach(c=>{
+        const opt=document.createElement('option'); opt.value=c; companiesList.appendChild(opt);
+        const span=document.createElement('span'); span.className='chip'; span.textContent=c; chips.appendChild(span);
+        const o=document.createElement('option'); o.textContent=c; fCompany.appendChild(o);
+      });
+    }
+
+    function buildSalesGrid(){
+      salesGrid.innerHTML='';
+      sales.forEach((s,i)=>{
+        const row=document.createElement('div'); row.className='row';
+        const lab=document.createElement('label'); lab.className='muted'; lab.style.width='90px'; lab.textContent=s.month; row.appendChild(lab);
+        const inp=document.createElement('input'); inp.type='number'; inp.step='0.01'; inp.className='input'; inp.style.flex='1'; inp.style.minWidth='200px'; inp.placeholder='0.00'; inp.value=s.amount;
+        inp.oninput=()=>{ s.amount=Number(inp.value||0); persist(); render(); };
+        row.appendChild(inp); salesGrid.appendChild(row);
+      });
+    }
+
+    function buildMonthFilter(){ fMonth.innerHTML='<option>الكل</option>'+AR_MONTHS.map(m=>`<option>${m}</option>`).join(''); }
+    function persist(){ localStorage.setItem(LS.companies, JSON.stringify(companies)); localStorage.setItem(LS.expenses, JSON.stringify(expenses)); localStorage.setItem(LS.sales, JSON.stringify(sales)); }
+
+    function applyFilters(){
+      const query=(q.value||'').trim(), m=fMonth.value||'الكل', c=fCompany.value||'الكل', st=fStatus.value||'الكل';
+      return expenses.filter(e=>{
+        const mq=!query || (e.id+' '+e.company+' '+e.month).includes(query);
+        const mm=m==='الكل'|| e.month===m; // إصلاح
+        const mc=c==='الكل'|| (e.company||'').trim()===(c||'').trim();
+        const ms=st==='الكل'|| e.status===st;
+        return mq && mm && mc && ms;
+      });
+    }
+
+    function totals(rows){
+      const all = rows.reduce((s,e)=> s+Number(e.amount),0);
+      const paid= rows.filter(e=> e.status==='تم السداد').reduce((s,e)=> s+Number(e.amount),0);
+      const unpaid = all - paid;
+      const salesYear = sales.reduce((s,x)=> s+Number(x.amount),0);
+      const ratio = salesYear? (all/salesYear*100) : 0;
+      return {all,paid,unpaid,ratio,salesYear};
+    }
+
+    function renderTable(rows){
+      tbl.innerHTML='';
+      if(!rows.length){
+        const tr=document.createElement('tr'); const td=document.createElement('td');
+        td.colSpan=9; td.style.textAlign='center'; td.style.color='#6b7280'; td.style.padding='16px';
+        td.textContent='لا توجد بيانات حتى الآن — ابدأ بإضافة مصروفات.'; tr.appendChild(td); tbl.appendChild(tr); return;
+      }
+      rows.forEach((e,idx)=>{
+        const tr=document.createElement('tr');
+        tr.innerHTML = `
+          <td>${idx+1}</td>
+          <td style="font-family:ui-monospace,monospace">${e.id}</td>
+          <td>${e.date}</td>
+          <td>${e.day}</td>
+          <td>${e.month}</td>
+          <td>${e.company}</td>
+          <td>${currency(e.amount)}</td>
+          <td>${e.status==='تم السداد' ? '<span class="ok">تم السداد</span>' : '<span class="warn">لم يتم السداد</span>'}</td>
+          <td>
+            <button class="btn" data-act="toggle" data-i="${idx}">تبديل</button>
+            <button class="btn" data-act="del" data-i="${idx}" style="color:#b91c1c">حذف</button>
+          </td>`;
+        tbl.appendChild(tr);
+      });
+    }
+
+    tbl.addEventListener('click', (ev)=>{
+      const btn = ev.target.closest('button'); if(!btn) return;
+      const i = Number(btn.dataset.i), act = btn.dataset.act;
+      const rows = applyFilters(), row = rows[i]; if(!row) return;
+      const originalIndex = expenses.findIndex(e=> e===row);
+      if(originalIndex<0) return;
+      if(act==='toggle'){ expenses[originalIndex].status = expenses[originalIndex].status==='تم السداد' ? 'لم يتم السداد' : 'تم السداد'; }
+      if(act==='del'){ if(!confirm('حذف السجل؟')) return; expenses.splice(originalIndex,1); }
+      persist(); render();
+    });
+
+    /* ===== رسومات محسّنة (بدون مكتبات) ===== */
+    function drawBars(canvas, labels, values){
+      const ctx=canvas.getContext('2d'); const W=canvas.width, H=canvas.height; ctx.clearRect(0,0,W,H);
+      const padL=40, padB=46, padT=16, padR=16, w=W-padL-padR, h=H-padT-padB;
+      const max=Math.max(1, ...values); const step=max/4;
+      // grid
+      ctx.strokeStyle='#e5e7eb'; ctx.lineWidth=1;
+      for(let i=0;i<=4;i++){ const y=padT + h - (h*(i/4)); ctx.beginPath(); ctx.moveTo(padL,y); ctx.lineTo(W-padR,y); ctx.stroke(); }
+      // bars
+      const barW = w/values.length*0.6, gap = w/values.length*0.4;
+      const grad = ctx.createLinearGradient(0,padT,0,H-padB); grad.addColorStop(0,'#38bdf8'); grad.addColorStop(1,'#0ea5e9');
+      ctx.textAlign='center'; ctx.font='12px system-ui'; ctx.fillStyle='#111827';
+      values.forEach((v,i)=>{
+        const x = padL + i*(barW+gap);
+        const bh = (v/max)*h, y = padT + (h-bh);
+        // rounded rect
+        const r=6; ctx.fillStyle=grad; ctx.beginPath();
+        ctx.moveTo(x, y+r); ctx.arcTo(x, y, x+r, y, r); ctx.lineTo(x+barW-r, y); ctx.arcTo(x+barW, y, x+barW, y+r, r);
+        ctx.lineTo(x+barW, y+bh); ctx.lineTo(x, y+bh); ctx.closePath(); ctx.fill();
+        // value + labels
+        ctx.fillStyle='#111827'; ctx.fillText(v.toLocaleString('ar-SA'), x+barW/2, y-6);
+        ctx.save(); ctx.translate(x+barW/2, H-padB+14); ctx.rotate(-Math.PI/6); ctx.fillText(labels[i], 0, 0); ctx.restore();
+      });
+      // y ticks
+      ctx.fillStyle='#6b7280'; ctx.textAlign='right';
+      for(let i=0;i<=4;i++){ const y=padT + h - (h*(i/4)); ctx.fillText(Math.round(step*i).toLocaleString('ar-SA'), padL-8, y+4); }
+    }
+
+    function drawLines(canvas, labels, y1, y2){
+      const ctx=canvas.getContext('2d'); const W=canvas.width, H=canvas.height; ctx.clearRect(0,0,W,H);
+      const padL=40, padB=46, padT=16, padR=16, w=W-padL-padR, h=H-padT-padB;
+      const max=Math.max(1, ...y1, ...y2);
+      // grid
+      ctx.strokeStyle='#e5e7eb'; for(let i=0;i<=4;i++){ const y=padT + h - (h*(i/4)); ctx.beginPath(); ctx.moveTo(padL,y); ctx.lineTo(W-padR,y); ctx.stroke(); }
+      function line(vals,color){
+        ctx.beginPath(); ctx.lineWidth=2; ctx.strokeStyle=color; ctx.fillStyle=color;
+        vals.forEach((v,i)=>{ const x=padL+i*(w/Math.max(1,vals.length-1)), y=padT + (h-(v/max)*h); i?ctx.lineTo(x,y):ctx.moveTo(x,y); });
+        ctx.stroke();
+        vals.forEach((v,i)=>{ const x=padL+i*(w/Math.max(1,vals.length-1)), y=padT + (h-(v/max)*h); ctx.beginPath(); ctx.arc(x,y,3,0,Math.PI*2); ctx.fill(); });
+      }
+      line(y1,'#ef4444'); line(y2,'#10b981');
+      ctx.fillStyle='#6b7280'; ctx.textAlign='center';
+      labels.forEach((lab,i)=>{ const x=padL+i*(w/Math.max(1,labels.length-1)); ctx.save(); ctx.translate(x, H-padB+14); ctx.rotate(-Math.PI/6); ctx.fillText(lab,0,0); ctx.restore(); });
+    }
+
+    function drawDonut(canvas, labels, values, colors){
+      const ctx=canvas.getContext('2d'); const W=canvas.width, H=canvas.height; ctx.clearRect(0,0,W,H);
+      const cx=W/2, cy=H/2, r=90, inner=55;
+      const total=values.reduce((a,b)=>a+b,0)||1;
+      let start=-Math.PI/2;
+      values.forEach((v,i)=>{
+        const ang = (v/total)*Math.PI*2;
+        ctx.beginPath(); ctx.moveTo(cx,cy); ctx.arc(cx,cy,r,start,start+ang); ctx.closePath(); ctx.fillStyle=colors[i%colors.length]; ctx.fill();
+        start+=ang;
+      });
+      // حفرة
+      ctx.globalCompositeOperation='destination-out';
+      ctx.beginPath(); ctx.arc(cx,cy,inner,0,Math.PI*2); ctx.fill(); ctx.globalCompositeOperation='source-over';
+      // وسوم
+      ctx.fillStyle='#111827'; ctx.font='12px system-ui';
+      let y=20;
+      labels.forEach((l,i)=>{ ctx.fillStyle=colors[i]; ctx.fillRect(20,y-8,10,10); ctx.fillStyle='#111827'; ctx.fillText(`${l}: ${values[i].toLocaleString('ar-SA')}`, 36, y+2); y+=18; });
+    }
+
+    function drawTopCompanies(canvas, map){
+      const ctx=canvas.getContext('2d'); const W=canvas.width, H=canvas.height; ctx.clearRect(0,0,W,H);
+      const entries = Object.entries(map).sort((a,b)=> b[1]-a[1]).slice(0,8);
+      const labels=entries.map(e=>e[0]), values=entries.map(e=>e[1]);
+      drawBars(canvas, labels, values);
+    }
+
+    function exportCSV(){
+      const expHeader = ['index','id','date','day','month','company','amount','status'];
+      const expRows = expenses.map((e,i)=> [i+1,e.id,e.date,e.day,e.month,e.company,e.amount,e.status]);
+      const expCsv = [expHeader, ...expRows].map(row => row.map(x => '"'+String(x).replaceAll('"','""')+'"').join(',')).join('\n');
+      const a1=document.createElement('a'); a1.href=URL.createObjectURL(new Blob([expCsv],{type:'text/csv;charset=utf-8'})); a1.download='mixice-expenses.csv'; a1.click(); URL.revokeObjectURL(a1.href);
+
+      const salesHeader = ['monthIndex','month','amount'];
+      const salesRows = sales.map(s=> [s.monthIndex,s.month,s.amount]);
+      const salesCsv = [salesHeader, ...salesRows].map(row => row.map(x => '"'+String(x).replaceAll('"','""')+'"').join(',')).join('\n');
+      const a2=document.createElement('a'); a2.href=URL.createObjectURL(new Blob([salesCsv],{type:'text/csv;charset=utf-8'})); a2.download='mixice-sales.csv'; a2.click(); URL.revokeObjectURL(a2.href);
+    }
+
+    function exportPDF(){
+      const rows = applyFilters();
+      const c1=document.getElementById('chart-months'), c2=document.getElementById('chart-mix');
+      const img1=c1.toDataURL('image/png'), img2=c2.toDataURL('image/png');
+      const w=window.open('','_blank'); const total=totals(rows);
+      w.document.write(`<!doctype html><html lang="ar" dir="rtl"><head><meta charset="utf-8"><title>تقرير Mix Ice</title>
+        <style>
+          body{font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,'Noto Sans',sans-serif;padding:24px;color:#0f172a}
+          h1{margin:0 0 8px}.muted{color:#6b7280;font-size:12px}.grid{display:grid;gap:12px;grid-template-columns:repeat(4,1fr)}
+          .card{border:1px solid #e5e7eb;border-radius:12px;padding:12px}
+          table{width:100%;border-collapse:collapse;font-size:12px} th,td{border-top:1px solid #e5e7eb;padding:6px;text-align:right} thead th{background:#f9fafb}
+          img{max-width:100%;border:1px solid #e5e7eb;border-radius:12px}
+        </style></head><body>
+        <h1>تقرير المصروفات والمبيعات</h1>
+        <div class="muted">تم إنشاء التقرير محليًا — ${new Date().toLocaleString('ar-SA')}</div>
+        <div class="grid" style="margin:12px 0">
+          <div class="card"><div class="muted">إجمالي المصروفات</div><div>${currency(total.all)}</div></div>
+          <div class="card"><div class="muted">المدفوع</div><div>${currency(total.paid)}</div></div>
+          <div class="card"><div class="muted">غير المدفوع</div><div>${currency(total.unpaid)}</div></div>
+          <div class="card"><div class="muted">إجمالي المبيعات</div><div>${currency(total.salesYear)}</div></div>
+        </div>
+        <h3>الرسومات</h3>
+        <img src="${img1}" />
+        <img src="${img2}" style="margin-top:12px"/>
+        <script>window.onload=()=> window.print()<\/script>
+      </body></html>`);
+      w.document.close();
+    }
+
+    // استيراد CSV (نفس المنطق)
+    function importCSV(text){
+      const toLatinDigits = (s='') => s.replace(/[٠-٩]/g, d => '٠١٢٣٤٥٦٧٨٩'.indexOf(d)).replace(/\u200f|\u200e|\ufeff/g,'');
+      const clean = (s='') => toLatinDigits(String(s)).replace(/^\"|\"$/g,'').trim();
+      const lines = text.split(/\r?\n/).map(l=> clean(l)).filter(Boolean);
+      const detectDelimiter = (line) => {
+        if((line.match(/,/g)||[]).length>=1) return ',';
+        if((line.match(/;/g)||[]).length>=1) return ';';
+        if((line.match(/\t/g)||[]).length>=1) return '\t';
+        return ',';
+      };
+
+      let sect=''; const newExp=[], newSales=[]; let delim = ',';
+
+      for(const raw of lines){
+        if(/^المصروفات$/i.test(raw)){ sect='exp'; continue; }
+        if(/^المبيعات$/i.test(raw)){ sect='sales'; continue; }
+        if(/^(رقم|#)?\s*[,;\t]\s*تاريخ/i.test(raw)) { delim = detectDelimiter(raw); continue; }
+        if(/^شهر[,;\t]قيمة$/i.test(raw)) { delim = detectDelimiter(raw); continue; }
+        if(!sect) continue;
+
+        const cols = raw.split(delim).map(clean);
+        if(sect==='exp' && cols.length>=3){
+          const [num='', date='', company='', amtRaw='0', stat='لم يتم السداد'] = cols;
+          const amt = parseFloat(clean(String(amtRaw)).replace(/٬/g,'').replace(/,/g,'.')) || 0;
+          if(num||date||company||amt){
+            let day='', month='', monthIndex=0;
+            if(date){ const d=new Date(date); if(!isNaN(d)) {day=d.getDate(); monthIndex=d.getMonth();} month=AR_MONTHS[monthIndex]||''; }
+            newExp.push({id:num,date,day,monthIndex,month,company,amount:amt,status:stat||'لم يتم السداد'});
+          }
+        }
+        if(sect==='sales' && cols.length>=1){
+          const [m='', amtRaw='0'] = cols;
+          const amt = parseFloat(clean(String(amtRaw)).replace(/٬/g,'').replace(/,/g,'.')) || 0;
+          if(m){ const d=new Date(m+'-01'); const mi=isNaN(d)?0:d.getMonth(); newSales.push({year:d.getFullYear()||new Date().getFullYear(),monthIndex:mi,month:AR_MONTHS[mi]||'',amount:amt}); }
+        }
+      }
+
+      if(newExp.length===0 && newSales.length===0){ alert('لم يتم العثور على بيانات صالحة'); return; }
+
+      expenses = newExp;
+      const year = new Date().getFullYear();
+      const byIdx = Object.fromEntries(newSales.map(s=> [s.monthIndex, s]));
+      sales = AR_MONTHS.map((m,i)=> byIdx[i]? byIdx[i] : {year,monthIndex:i,month:m,amount:0});
+
+      syncCompaniesWithExpenses();
+      persist();
+      render();
+      alert('تم الاستيراد بنجاح');
+    }
+
+    function render(){
+      buildMonthFilter();
+      syncCompaniesWithExpenses();
+      refreshCompaniesUI();
+      const rows = applyFilters(); renderTable(rows);
+      const t = totals(rows);
+      sAll.textContent=currency(t.all); sPaid.textContent=currency(t.paid); sUnpaid.textContent=currency(t.unpaid);
+      sSales.textContent=currency(t.salesYear); sRatio.textContent=(t.ratio).toFixed(2)+'%';
+
+      const byMonth = AR_MONTHS.map(m=> rows.filter(e=> e.month===m).reduce((s,e)=> s+Number(e.amount),0));
+      drawBars(document.getElementById('chart-months'), AR_MONTHS, byMonth);
+      const expSeries = byMonth, saleSeries = AR_MONTHS.map((_,i)=> Number(sales[i]?.amount||0));
+      drawLines(document.getElementById('chart-mix'), AR_MONTHS, expSeries, saleSeries);
+
+      // Donut مدفوع/غير مدفوع
+      drawDonut(document.getElementById('chart-donut'),
+        ['مدفوع','غير مدفوع'], [t.paid, t.unpaid], ['#10b981','#ef4444']);
+
+      // أعلى الشركات إنفاقًا
+      const byCompany = rows.reduce((acc,e)=> (acc[e.company]=(acc[e.company]||0)+Number(e.amount), acc), {});
+      drawTopCompanies(document.getElementById('chart-top'), byCompany);
+    }
+
+    document.getElementById('btn-add').onclick = ()=>{
+      const id=expId.value.trim(), company=expCompany.value.trim(), amount=Number(expAmount.value||0), date=expDate.value||todayISO(), status=expStatus.value;
+      if(!id||!company||!amount||!date){ alert('أكمل الحقول المطلوبة'); return; }
+      const d=new Date(date), monthIndex=d.getMonth();
+      expenses.unshift({id,date,day:d.getDate(),monthIndex,month:AR_MONTHS[monthIndex],company,amount,status});
+      if(!companies.includes(company)) companies.push(company);
+      syncCompaniesWithExpenses();
+      expId.value=''; expCompany.value=''; expAmount.value=''; expStatus.value='لم يتم السداد';
+      persist(); render();
+    };
+    document.getElementById('btn-add-company').onclick = ()=>{
+      const name = (document.getElementById('new-company').value||'').trim();
+      if(!name) return; if(companies.includes(name)) return alert('الشركة موجودة');
+      companies.push(name);
+      syncCompaniesWithExpenses();
+      document.getElementById('new-company').value='';
+      persist(); render();
+    };
+    [q,fMonth,fCompany,fStatus].forEach(elm=> elm.addEventListener('input', ()=> render()));
+    document.getElementById('btn-export-csv').onclick = exportCSV;
+    document.getElementById('btn-export-pdf').onclick = exportPDF;
+
+    document.getElementById('file-import').addEventListener('change', (e)=>{
+      const f=e.target.files?.[0]; if(!ف) return;
+      const r=new FileReader();
+      r.onload=()=> importCSV(String(r.result||'')); 
+      r.readAsText(f,'utf-8');
+    });
+
+    document.getElementById('btn-reset').onclick = ()=>{
+      if(!confirm('ستُحذف كل البيانات المخزنة محليًا، هل أنت متأكد؟')) return;
+      localStorage.removeItem(LS.companies); localStorage.removeItem(LS.expenses); localStorage.removeItem(LS.sales);
+      companies=["Mix Ice","المورد العام"]; expenses=[]; sales=AR_MONTHS.map((م,i)=>({year:new Date().getFullYear(),monthIndex:i,month:م,amount:0}));
+      persist(); render();
+    };
+
+    // تشغيل أولي
+    syncCompaniesWithExpenses();
+    refreshCompaniesUI();
+    buildSalesGrid();
+    buildMonthFilter();
+    render();
+  })();
+  </script>
+</body>
+</html>
