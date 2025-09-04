@@ -197,7 +197,7 @@
     const currency = n => new Intl.NumberFormat('ar-SA',{style:'currency',currency:'SAR',maximumFractionDigits:2}).format(Number(n||0));
     const todayISO = ()=> new Date().toISOString().slice(0,10);
 
-    let companies = JSON.parse(localStorage.getItem(LS.companies) || '["Public resource","المورد العام"]');
+    let companies = JSON.parse(localStorage.getItem(LS.companies) || '["عام","المورد العام"]');
     let expenses  = JSON.parse(localStorage.getItem(LS.expenses)  || '[]');
     let sales     = JSON.parse(localStorage.getItem(LS.sales)     || 'null');
     if(!sales){ sales = AR_MONTHS.map((m,i)=>({year:new Date().getFullYear(),monthIndex:i,month:m,amount:0})); }
