@@ -2,6 +2,26 @@
 <html lang="ar" dir="rtl">
 <head>
   <meta charset="utf-8" />
+  <style>html{visibility:hidden;opacity:0}</style>
+  <script>
+  (function () {
+    var ok = prompt("أدخل كلمة المرور:") === "1234"; // غيّر 1234 لكلمتك
+    if (ok) {
+      window.__ALLOW__ = true;
+      document.documentElement.style.visibility = 'visible';
+      document.documentElement.style.opacity = '1';
+    } else {
+      document.open();
+      document.write(
+        '<!doctype html><meta charset="utf-8"><title>وصول مرفوض</title>' +
+        "<div style=\"font-family:system-ui;padding:48px;text-align:center;color:#b91c1c;font-size:20px\">🚫 وصول مرفوض</div>"
+      );
+      document.close();
+      setTimeout(function(){ throw new Error('blocked'); }, 0);
+    }
+  })();
+  </script>
+  <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>لوحة تحكم مصروفات ومبيعات   </title>
   <style>
@@ -49,17 +69,6 @@
   </style>
 </head>
 <body>
-<script>
-  const PASSWORD = "1234"; // غيّر الرقم لكلمة المرور اللي تبغاها
-  const pass = prompt("أدخل كلمة المرور:");
-
-  if (pass !== PASSWORD) {
-    // مسح كل محتوى الصفحة
-    document.body.innerHTML = "<h2 style='color:red;text-align:center;margin-top:50px;'>🚫 وصول مرفوض</h2>";
-    // إيقاف تنفيذ باقي الأكواد
-    throw new Error("تم إيقاف الصفحة بسبب كلمة المرور الخاطئة");
-  }
-</script>
   <header>
     <div class="container row" style="justify-content:space-between">
       <div>
@@ -511,7 +520,7 @@
       companies=["Mix Ice","المورد العام"]; expenses=[]; sales=AR_MONTHS.map((م,i)=>({year:new Date().getFullYear(),monthIndex:i,month:م,amount:0}));
       persist(); render();
     };
-
+if (!window.__ALLOW__) { throw new Error('blocked-before-app'); }
     // تشغيل أولي
     syncCompaniesWithExpenses();
     refreshCompaniesUI();
