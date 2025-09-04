@@ -517,7 +517,7 @@
     document.getElementById('btn-reset').onclick = ()=>{
       if(!confirm('ستُحذف كل البيانات المخزنة محليًا، هل أنت متأكد؟')) return;
       localStorage.removeItem(LS.companies); localStorage.removeItem(LS.expenses); localStorage.removeItem(LS.sales);
-      companies=["Mix Ice","المورد العام"]; expenses=[]; sales=AR_MONTHS.map((م,i)=>({year:new Date().getFullYear(),monthIndex:i,month:م,amount:0}));
+      companies=["عام","المورد العام"]; expenses=[]; sales=AR_MONTHS.map((م,i)=>({year:new Date().getFullYear(),monthIndex:i,month:م,amount:0}));
       persist(); render();
     };
 if (!window.__ALLOW__) { throw new Error('blocked-before-app'); }
