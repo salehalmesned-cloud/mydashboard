@@ -53,7 +53,7 @@
     <div class="container row" style="justify-content:space-between">
       <div>
         <h1>لوحة تحكم مصروفات ومبيعات </h1>
-        <div class="muted">تعمل محليًا وخارجية — بدون انترنت أو إنترنت</div>
+        <div class="muted">تعمل محليًا على رابط — بقاعدة بيانات محلية بجهاز واحد - انتبه عن التهيئة لايمكن استرجاع البيانات </div>
       </div>
       <div class="row toolbar">
         <button id="btn-export-csv" class="btn">⬇️ تصدير Excel (CSV)</button>
@@ -177,7 +177,7 @@
     const currency = n => new Intl.NumberFormat('ar-SA',{style:'currency',currency:'SAR',maximumFractionDigits:2}).format(Number(n||0));
     const todayISO = ()=> new Date().toISOString().slice(0,10);
 
-    let companies = JSON.parse(localStorage.getItem(LS.companies) || '["Mix Ice","المورد العام"]');
+    let companies = JSON.parse(localStorage.getItem(LS.companies) || '["Public resource","المورد العام"]');
     let expenses  = JSON.parse(localStorage.getItem(LS.expenses)  || '[]');
     let sales     = JSON.parse(localStorage.getItem(LS.sales)     || 'null');
     if(!sales){ sales = AR_MONTHS.map((m,i)=>({year:new Date().getFullYear(),monthIndex:i,month:m,amount:0})); }
